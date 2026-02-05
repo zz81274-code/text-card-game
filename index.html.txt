@@ -3,17 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>文字卡牌遊戲</title>
+<title>升級版文字卡牌遊戲</title>
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; text-align: center; }
-button { padding: 10px 20px; margin: 10px; }
-#hand, #ai-hand { display: flex; justify-content: center; margin: 10px 0; }
-.card { width: 60px; height: 90px; border: 1px solid #333; margin: 0 5px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
+body {
+    font-family: Arial, sans-serif; 
+    padding: 15px; 
+    background: #f0f0f0; 
+    text-align: center; 
+}
+
+h1 {
+    font-size: 24px;
+}
+
+button {
+    padding: 12px 24px; 
+    margin: 10px; 
+    font-size: 16px;
+}
+
+#hand, #ai-hand {
+    display: flex; 
+    justify-content: center; 
+    margin: 10px 0; 
+    flex-wrap: wrap; /* 允許換行，適合手機小螢幕 */
+    gap: 10px; /* 控制卡片間距 */
+}
+
+.card {
+    width: 50px; /* 減少卡片寬度以適應手機 */
+    height: 70px; /* 減少高度 */
+    border: 1px solid #333; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: #fff; 
+    cursor: pointer; 
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.card.played {
+    transform: scale(1.2);
+    opacity: 0.5;
+}
+
+#timer {
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* 響應式設計：針對較小的裝置調整樣式 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 10px 15px;
+    }
+
+    .card {
+        width: 40px;
+        height: 60px;
+        margin: 5px;
+    }
+
+    #timer {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 18px;
+    }
+
+    button {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .card {
+        width: 35px;
+        height: 50px;
+    }
+
+    #timer {
+        font-size: 12px;
+    }
+}
 </style>
 </head>
 <body>
 
-<h1>文字卡牌遊戲</h1>
+<h1>升級版文字卡牌遊戲</h1>
 <p>你的手牌：<span id="hand-count">0</span> / 5</p>
 <div id="hand"></div>
 
@@ -21,19 +109,18 @@ button { padding: 10px 20px; margin: 10px; }
 <div id="ai-hand"></div>
 
 <button id="draw-btn">抽一張卡</button>
-
+<p id="timer">回合倒數: 15 秒</p>
 <p id="status"></p>
 
 <script>
 const maxHand = 5;
 let hand = [];
 let aiHand = [];
+let timer = 15;
+let timerInterval;
 
 function drawCard() {
-  if (hand.length >= maxHand) {
-    alert("手牌已滿！");
-    return;
-  }
+  if (hand.length >= maxHand) { alert("手牌已滿！"); return; }
   const card = Math.floor(Math.random() * 10) + 1;
   hand.push(card);
   updateHands();
@@ -51,10 +138,7 @@ function updateHands() {
   });
   document.getElementById("hand-count").textContent = hand.length;
 
-  // AI 隨機手牌顯示
-  while(aiHand.length < 5) {
-    aiHand.push(Math.floor(Math.random() * 10) + 1);
-  }
+  while(aiHand.length < 5) { aiHand.push(Math.floor(Math.random() * 10) + 1); }
   const aiDiv = document.getElementById("ai-hand");
   aiDiv.innerHTML = "";
   aiHand.forEach(c => {
@@ -65,19 +149,48 @@ function updateHands() {
   });
 }
 
-function playCard(index) {
-  const playerCard = hand.splice(index, 1)[0];
-  const aiCard = aiHand.shift();
-  const status = document.getElementById("status");
-  if (playerCard > aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你贏了！`;
-  else if (playerCard < aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你輸了！`;
-  else status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，平手！`;
-  updateHands();
+function startTurn() {
+  clearInterval(timerInterval);
+  timer = 15;
+  document.getElementById("timer").textContent = "回合倒數: 15 秒";
+  timerInterval = setInterval(() => {
+    timer--;
+    document.getElementById("timer").textContent = "回合倒數: " + timer + " 秒";
+    if(timer <= 0) {
+      clearInterval(timerInterval);
+      autoPlay();
+    }
+  }, 1000);
 }
 
-// 初始化
-updateHands();
+function playCard(index) {
+  clearInterval(timerInterval);
+  const playerCardDiv = document.getElementById("hand").children[index];
+  playerCardDiv.classList.add("played");
+
+  const playerCard = hand.splice(index, 1)[0];
+  const aiCard = aiHand.shift();
+  const aiDiv = document.getElementById("ai-hand").children[0];
+  aiDiv.classList.add("played");
+
+  const status = document.getElementById("status");
+  setTimeout(() => {
+    if(playerCard > aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你贏了！`;
+    else if(playerCard < aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你輸了！`;
+    else status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，平手！`;
+    updateHands();
+    startTurn();
+  }, 500);
+}
+
+function autoPlay() {
+  if(hand.length > 0) playCard(0);
+}
+
 document.getElementById("draw-btn").onclick = drawCard;
+
+updateHands();
+startTurn();
 </script>
 
 </body>
