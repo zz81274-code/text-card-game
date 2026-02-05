@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字卡牌遊戲</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; text-align: center; }
+button { padding: 10px 20px; margin: 10px; }
+#hand, #ai-hand { display: flex; justify-content: center; margin: 10px 0; }
+.card { width: 60px; height: 90px; border: 1px solid #333; margin: 0 5px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>文字卡牌遊戲</h1>
+<p>你的手牌：<span id="hand-count">0</span> / 5</p>
+<div id="hand"></div>
+
+<p>AI 手牌：</p>
+<div id="ai-hand"></div>
+
+<button id="draw-btn">抽一張卡</button>
+
+<p id="status"></p>
+
+<script>
+const maxHand = 5;
+let hand = [];
+let aiHand = [];
+
+function drawCard() {
+  if (hand.length >= maxHand) {
+    alert("手牌已滿！");
+    return;
+  }
+  const card = Math.floor(Math.random() * 10) + 1;
+  hand.push(card);
+  updateHands();
+}
+
+function updateHands() {
+  const handDiv = document.getElementById("hand");
+  handDiv.innerHTML = "";
+  hand.forEach((c, i) => {
+    const cardDiv = document.createElement("div");
+    cardDiv.className = "card";
+    cardDiv.textContent = c;
+    cardDiv.onclick = () => playCard(i);
+    handDiv.appendChild(cardDiv);
+  });
+  document.getElementById("hand-count").textContent = hand.length;
+
+  // AI 隨機手牌顯示
+  while(aiHand.length < 5) {
+    aiHand.push(Math.floor(Math.random() * 10) + 1);
+  }
+  const aiDiv = document.getElementById("ai-hand");
+  aiDiv.innerHTML = "";
+  aiHand.forEach(c => {
+    const cardDiv = document.createElement("div");
+    cardDiv.className = "card";
+    cardDiv.textContent = "?";
+    aiDiv.appendChild(cardDiv);
+  });
+}
+
+function playCard(index) {
+  const playerCard = hand.splice(index, 1)[0];
+  const aiCard = aiHand.shift();
+  const status = document.getElementById("status");
+  if (playerCard > aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你贏了！`;
+  else if (playerCard < aiCard) status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，你輸了！`;
+  else status.textContent = `你出 ${playerCard}，AI 出 ${aiCard}，平手！`;
+  updateHands();
+}
+
+// 初始化
+updateHands();
+document.getElementById("draw-btn").onclick = drawCard;
+</script>
+
+</body>
+</html>
